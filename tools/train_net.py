@@ -217,6 +217,10 @@ def do_train(args, cfg):
 
     # build model ema
     ema.may_build_model_ema(cfg, model)
+    # build compile mode
+    if cfg.train.compile:
+        print("model compile")
+        model = torch.compile(model)
 
     trainer = Trainer(
         model=model,
