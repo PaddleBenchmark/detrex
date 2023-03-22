@@ -86,7 +86,7 @@ class Trainer(SimpleTrainer):
         assert self.model.training, "[Trainer] model was changed to eval mode!"
         assert torch.cuda.is_available(), "[Trainer] CUDA is required for AMP training!"
         from torch.cuda.amp import autocast
-
+        time_logger = logging.getLogger("detectron2")
         start = time.perf_counter()
         """
         If you want to do something with the data, you can wrap the dataloader.
@@ -123,7 +123,8 @@ class Trainer(SimpleTrainer):
             if self.clip_grad_params is not None:
                 self.clip_grads(self.model.parameters())
             self.optimizer.step()
-
+        step_time = time.perf_counter() - start
+        time_logger.info(f'\n iter completed in, {(step_time) :.3f}s/it.')
         self._write_metrics(loss_dict, data_time)
 
     def clip_grads(self, params):
@@ -217,10 +218,6 @@ def do_train(args, cfg):
 
     # build model ema
     ema.may_build_model_ema(cfg, model)
-    # build compile mode
-    if cfg.train.compile:
-        print("model compile")
-        model = torch.compile(model)
 
     trainer = Trainer(
         model=model,
